@@ -1,41 +1,42 @@
-import { Component } from 'react';
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { ModalWrap, Overlay } from './Modal.styled';
 
 const modalRoot = document.querySelector('#modal-root');
 
-class Modal extends Component {
-  static propTypes = {
-    closeModal: PropTypes.func.isRequired,
-    pictureURL: PropTypes.string.isRequired,
+const Modal = ({ pictureURL, closeModal }) => {
+  useEffect(() => {
+    window.addEventListener('keydown', handlerOnKeyDown);
+    window.addEventListener('click', handlerOnClick);
+    return () => {
+      window.removeEventListener('keydown', handlerOnKeyDown);
+      window.removeEventListener('click', handlerOnClick);
+    };
+  });
+
+  const handlerOnKeyDown = ({ code }) => {
+    console.log('keydown');
+    if (code === 'Escape') closeModal();
+  };
+  const handlerOnClick = ({ target }) => {
+    console.log('click');
+    if (target.nodeName === 'DIV') closeModal();
   };
 
-  componentDidMount() {
-    window.addEventListener('keydown', this.handlerOnKeyDown);
-    window.addEventListener('click', this.handlerOnClick);
-  }
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handlerOnKeyDown);
-    window.removeEventListener('click', this.handlerOnClick);
-  }
-  handlerOnKeyDown = ({ code }) => {
-    if (code === 'Escape') this.props.closeModal();
-  };
-  handlerOnClick = ({ target }) => {
-    if (target.nodeName === 'DIV') this.props.closeModal();
-  };
+  return createPortal(
+    <Overlay>
+      <ModalWrap>
+        <img src={pictureURL} alt="" />
+      </ModalWrap>
+    </Overlay>,
+    modalRoot
+  );
+};
 
-  render() {
-    return createPortal(
-      <Overlay>
-        <ModalWrap>
-          <img src={this.props.pictureURL} alt="" />
-        </ModalWrap>
-      </Overlay>,
-      modalRoot
-    );
-  }
-}
+Modal.propTypes = {
+  closeModal: PropTypes.func.isRequired,
+  pictureURL: PropTypes.string.isRequired,
+};
 
 export default Modal;

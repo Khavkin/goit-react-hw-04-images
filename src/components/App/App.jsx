@@ -2,10 +2,11 @@ import { GetPictures } from 'api/pixabay-api';
 import TextButton from 'components/Button/Button';
 import ImageGallery from 'components/ImageGallery';
 import Loader from 'components/Loader';
+import Message from 'components/Message';
 import Modal from 'components/Modal';
 import SearchBar from 'components/SearchBar';
 
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { MainContainer } from './App.styled';
 const appStatus = {
@@ -15,100 +16,94 @@ const appStatus = {
   REJECTED: 4,
 };
 
-class App extends Component {
-  state = {
-    pictures: [],
-    searchQuery: '',
-    page: 1,
-    // isLoading: false,
-    status: appStatus.IDLE,
-    error: null,
-    largeImageURL: '',
-    totalHits: 0,
-  };
+const App = () => {
+  const [pictures, setPictures] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState(appStatus.IDLE);
+  const [error, setError] = useState(null);
+  const [largeImageURL, setLargeImageURL] = useState('');
+  const [totalHits, setTotalHits] = useState(0);
+  const [showModal, setShowModal] = useState(false);
 
-  componentDidUpdate(_, prevState) {
-    const { searchQuery, page } = this.state;
-    if (prevState.searchQuery !== searchQuery || prevState.page !== page) {
-      this.setState({ status: appStatus.PENDING });
+  useEffect(() => {
+    if (searchQuery === '') return;
+    setStatus(appStatus.PENDING);
 
-      GetPictures({ searchQuery, page })
-        .then(result => {
-          flushSync(() => {
-            this.setState(oldState => {
-              return {
-                pictures:
-                  page === 1
-                    ? [...result.data]
-                    : [...oldState.pictures, ...result.data],
-                status: appStatus.RESOLVED,
-              };
-            });
+    GetPictures({ searchQuery, page })
+      .then(result => {
+        flushSync(() => {
+          setPictures(oldPictures => {
+            return page === 1
+              ? [...result.data]
+              : [...oldPictures, ...result.data];
           });
-
-          window.scrollTo({
-            top: window.scrollY + 260 * 3 + 16 * 3,
-            behavior: 'smooth',
-          });
-
-          if (prevState.totalHits !== result.totalHits)
-            this.setState({ totalHits: result.totalHits });
-        })
-        .catch(error => {
-          this.setState({ error, status: appStatus.REJECTED });
+          setStatus(appStatus.RESOLVED);
         });
+
+        window.scrollTo({
+          top: window.scrollY + 260 * 3 + 16 * 3,
+          behavior: 'smooth',
+        });
+
+        if (totalHits !== result.totalHits) setTotalHits(result.totalHits);
+      })
+      .catch(error => {
+        setError(error);
+        setStatus(appStatus.REJECTED);
+      });
+  }, [searchQuery, page]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleOnSubmit = newSearchQuery => {
+    if (searchQuery !== newSearchQuery) {
+      setSearchQuery(newSearchQuery);
+      setPage(1);
+      setPictures([]);
     }
-  }
-
-  handleOnSubmit = searchQuery => {
-    if (this.state.searchQuery !== searchQuery)
-      this.setState({ searchQuery, page: 1, pictures: [] });
   };
 
-  handleOnLoadMoreClick = () => {
-    this.setState(oldState => ({ page: oldState.page + 1 }));
+  const handleOnLoadMoreClick = () => {
+    setPage(oldPage => oldPage + 1);
   };
 
-  handleOnPictureClick = largeImageURL => {
-    this.setState({ showModal: true, largeImageURL });
+  const handleOnPictureClick = newLargeImageURL => {
+    setShowModal(true);
+    setLargeImageURL(newLargeImageURL);
   };
 
-  closeModal = () => {
-    this.setState({ showModal: false, largeImageURL: '' });
+  const closeModal = () => {
+    setShowModal(false);
+    setLargeImageURL('');
   };
 
-  render() {
-    const { largeImageURL, pictures, status, showModal, totalHits } =
-      this.state;
-    return (
-      <MainContainer className="App">
-        <SearchBar onSubmit={this.handleOnSubmit}></SearchBar>
-        {pictures.length !== 0 && (
-          <ImageGallery
-            pictures={pictures}
-            onPictureClick={this.handleOnPictureClick}
-          ></ImageGallery>
-        )}
+  return (
+    <MainContainer className="App">
+      <SearchBar onSubmit={handleOnSubmit}></SearchBar>
+      {pictures.length !== 0 && (
+        <ImageGallery
+          pictures={pictures}
+          onPictureClick={handleOnPictureClick}
+        ></ImageGallery>
+      )}
 
-        {status === appStatus.PENDING && <Loader></Loader>}
-        {pictures.length !== 0 && status !== appStatus.PENDING && (
-          <TextButton
-            caption={
-              pictures.length < totalHits ? 'Load more' : 'No more images'
-            }
-            disabled={pictures.length >= totalHits}
-            onClick={this.handleOnLoadMoreClick}
-          ></TextButton>
-        )}
-        {showModal && (
-          <Modal
-            pictureURL={largeImageURL}
-            closeModal={this.closeModal}
-          ></Modal>
-        )}
-      </MainContainer>
-    );
-  }
-}
+      {status === appStatus.PENDING && <Loader></Loader>}
+      {error && <Message message={error.message} messageType="error"></Message>}
+      {pictures.length === 0 && status === appStatus.RESOLVED && (
+        <Message message="Images not found" messageType="info"></Message>
+      )}
+      {pictures.length !== 0 && status !== appStatus.PENDING && (
+        <TextButton
+          caption={pictures.length < totalHits ? 'Load more' : 'No more images'}
+          disabled={pictures.length >= totalHits}
+          onClick={handleOnLoadMoreClick}
+        ></TextButton>
+      )}
+
+      {showModal && (
+        <Modal pictureURL={largeImageURL} closeModal={closeModal}></Modal>
+      )}
+    </MainContainer>
+  );
+};
 
 export default App;

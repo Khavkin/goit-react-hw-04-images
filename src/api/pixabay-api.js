@@ -1,5 +1,5 @@
 const KEY = '32167466-eca24bf310fd62d926b174c37';
-export async function GetPictures({ searchQuery = 'cat', page = 1 }) {
+export async function GetPictures({ searchQuery = '', page = 1 }) {
   // console.log(searchQuery, page);
   try {
     const responce = await fetch(
