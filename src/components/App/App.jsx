@@ -47,10 +47,6 @@ const App = () => {
           if (totalHits !== result.totalHits) setTotalHits(result.totalHits);
         });
 
-        // window.scrollTo({
-        //   top: window.scrollY + 260 * 3 + 16 * 3,
-        //   behavior: 'smooth',
-        // });
         btnLoadMoreRef.current &&
           btnLoadMoreRef.current.scrollIntoView({
             behavior: 'smooth',
@@ -60,7 +56,7 @@ const App = () => {
         setError(error);
         setStatus(appStatus.REJECTED);
       });
-  }, [searchQuery, page, totalHits, startUpdate, pictures]);
+  }, [searchQuery, page, totalHits, startUpdate]);
 
   const handleOnSubmit = newSearchQuery => {
     if (newSearchQuery !== '' && searchQuery !== newSearchQuery) {
