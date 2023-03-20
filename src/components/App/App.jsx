@@ -52,7 +52,7 @@ const App = () => {
         setError(error);
         setStatus(appStatus.REJECTED);
       });
-  }, [searchQuery, page]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchQuery, page, totalHits]);
 
   const handleOnSubmit = newSearchQuery => {
     if (searchQuery !== newSearchQuery) {
