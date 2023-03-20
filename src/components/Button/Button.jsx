@@ -1,13 +1,14 @@
 import { Button } from './Button.styled';
 import PropTypes from 'prop-types';
+import { forwardRef } from 'react';
 
-const TextButton = ({ caption, disabled, onClick }) => {
+const TextButton = forwardRef(({ caption, disabled, onClick }, ref) => {
   return (
-    <Button type="button" onClick={onClick} disabled={disabled}>
+    <Button ref={ref} type="button" onClick={onClick} disabled={disabled}>
       {caption}
     </Button>
   );
-};
+});
 
 TextButton.propTypes = {
   caption: PropTypes.string.isRequired,

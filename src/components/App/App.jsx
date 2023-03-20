@@ -6,7 +6,7 @@ import Message from 'components/Message';
 import Modal from 'components/Modal';
 import SearchBar from 'components/SearchBar';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { MainContainer } from './App.styled';
 const appStatus = {
@@ -25,9 +25,13 @@ const App = () => {
   const [largeImageURL, setLargeImageURL] = useState('');
   const [totalHits, setTotalHits] = useState(0);
   const [showModal, setShowModal] = useState(false);
+  const [startUpdate, setStartUpdate] = useState(false);
+
+  const btnLoadMoreRef = useRef();
 
   useEffect(() => {
-    if (searchQuery === '') return;
+    if (searchQuery === '' || !startUpdate) return;
+
     setStatus(appStatus.PENDING);
 
     GetPictures({ searchQuery, page })
@@ -39,31 +43,38 @@ const App = () => {
               : [...oldPictures, ...result.data];
           });
           setStatus(appStatus.RESOLVED);
+          setStartUpdate(false);
+          if (totalHits !== result.totalHits) setTotalHits(result.totalHits);
         });
 
-        window.scrollTo({
-          top: window.scrollY + 260 * 3 + 16 * 3,
-          behavior: 'smooth',
-        });
-
-        if (totalHits !== result.totalHits) setTotalHits(result.totalHits);
+        // window.scrollTo({
+        //   top: window.scrollY + 260 * 3 + 16 * 3,
+        //   behavior: 'smooth',
+        // });
+        btnLoadMoreRef.current &&
+          btnLoadMoreRef.current.scrollIntoView({
+            behavior: 'smooth',
+          });
       })
       .catch(error => {
         setError(error);
         setStatus(appStatus.REJECTED);
       });
-  }, [searchQuery, page, totalHits]);
+  }, [searchQuery, page, totalHits, startUpdate, pictures]);
 
   const handleOnSubmit = newSearchQuery => {
-    if (searchQuery !== newSearchQuery) {
-      setSearchQuery(newSearchQuery);
+    if (newSearchQuery !== '' && searchQuery !== newSearchQuery) {
+      setStartUpdate(false); // не дає запускати запрос поки не будуть встановлені всі параметри.
+      //setPictures([]);
       setPage(1);
-      setPictures([]);
+      setSearchQuery(newSearchQuery);
+      setStartUpdate(true); // можна запускати.
     }
   };
 
   const handleOnLoadMoreClick = () => {
     setPage(oldPage => oldPage + 1);
+    setStartUpdate(true);
   };
 
   const handleOnPictureClick = newLargeImageURL => {
@@ -93,6 +104,7 @@ const App = () => {
       )}
       {pictures.length !== 0 && status !== appStatus.PENDING && (
         <TextButton
+          ref={btnLoadMoreRef}
           caption={pictures.length < totalHits ? 'Load more' : 'No more images'}
           disabled={pictures.length >= totalHits}
           onClick={handleOnLoadMoreClick}
