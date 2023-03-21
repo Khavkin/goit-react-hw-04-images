@@ -7,22 +7,20 @@ const modalRoot = document.querySelector('#modal-root');
 
 const Modal = ({ pictureURL, closeModal }) => {
   useEffect(() => {
+    const handlerOnKeyDown = ({ code }) => {
+      if (code === 'Escape') closeModal();
+    };
+    const handlerOnClick = ({ target }) => {
+      if (target.nodeName === 'DIV') closeModal();
+    };
+
     window.addEventListener('keydown', handlerOnKeyDown);
     window.addEventListener('click', handlerOnClick);
     return () => {
       window.removeEventListener('keydown', handlerOnKeyDown);
       window.removeEventListener('click', handlerOnClick);
     };
-  });
-
-  const handlerOnKeyDown = ({ code }) => {
-    console.log('keydown');
-    if (code === 'Escape') closeModal();
-  };
-  const handlerOnClick = ({ target }) => {
-    console.log('click');
-    if (target.nodeName === 'DIV') closeModal();
-  };
+  }, [closeModal]);
 
   return createPortal(
     <Overlay>
