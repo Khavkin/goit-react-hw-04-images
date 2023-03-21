@@ -60,8 +60,9 @@ const App = () => {
 
   const handleOnSubmit = newSearchQuery => {
     if (newSearchQuery !== '' && searchQuery !== newSearchQuery) {
+      // setPictures([]);
       setStartUpdate(false); // не дає запускати запрос поки не будуть встановлені всі параметри.
-      //setPictures([]);
+
       setPage(1);
       setSearchQuery(newSearchQuery);
       setStartUpdate(true); // можна запускати.
